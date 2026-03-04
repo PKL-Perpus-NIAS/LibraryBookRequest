@@ -268,8 +268,8 @@
                 <li class="{{ request()->routeIs('permintaan.index') ? 'active' : '' }}">
                     <a href="{{ route('permintaan.index') }}">Permintaan Buku</a>
                 </li>
-                <li class="{{ request()->routeIs('profile.edit') ? 'active' : '' }}">
-                    <a href="{{ route('profile.edit') }}">Profil</a>
+                <li class="{{ request()->routeIs('profile') ? 'active' : '' }}">
+                    <a href="{{ route('profile') }}">Profil</a>
                 </li>
             </ul>
 
