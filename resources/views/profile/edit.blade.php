@@ -31,7 +31,7 @@
 
         /* Gaya khusus Tombol Delete Account */
         .modern-modal section:last-child button,
-        .modern-modal button[type="submit"][class*="red"], /* Menangkap tombol merah bawaan breeze */
+        .modern-modal button[type="submit"][class*="red"],
         .modern-modal form[action*="destroy"] button {
             background-color: #dc2626 !important;
         }

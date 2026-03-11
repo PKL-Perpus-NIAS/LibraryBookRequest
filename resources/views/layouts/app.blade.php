@@ -226,11 +226,13 @@
 
     <header class="topbar">
         <div class="topbar-left">
-            <img src="{{ asset('images/logo-unair.png') }}" alt="Logo">
-            <div class="topbar-title">
-                <div style="font-weight: bold; font-size: 18px;">LIBRARY BOOK REQUEST</div>
-                <div style="font-size: 12px;">PERPUSTAKAAN UNIVERSITAS AIRLANGGA</div>
-            </div>
+            <a href="{{ route('dashboard') }}" style="display: flex; align-items: center; text-decoration: none; cursor: pointer;">
+                <img src="{{ asset('images/logo-unair.png') }}" alt="Logo UNAIR" style="height: 50px; margin-right: 10px;">
+                <div style="display: flex; flex-direction: column;">
+                    <span style="font-weight: bold; font-size: 18px; color: white;">LIBRARY BOOK REQUEST</span>
+                    <span style="font-size: 12px; color: #e2e8f0;">PERPUSTAKAAN UNIVERSITAS AIRLANGGA</span>
+                </div>  
+            </a>
         </div>
         <div class="topbar-right">
             <div id="realtime-clock"></div>
