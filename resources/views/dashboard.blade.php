@@ -11,7 +11,6 @@
         .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 30px; }
         .chart-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         
-        /* Baris Baru untuk Chart Fakultas */
         .full-chart-wrapper { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 30px; }
         .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; }
         .chart-title { margin: 0; color: #003366; font-weight: bold; font-size: 18px; }
@@ -27,6 +26,10 @@
         .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
         .badge-process { background: #fef3c7; color: #92400e; }
         .badge-success { background: #dcfce7; color: #166534; }
+
+        .hc-spinner { width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top: 4px solid #003566; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 10px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .hc-loading-text { font-weight: 600; color: #003566; font-size: 14px; font-family: 'Inter', sans-serif; }
     </style>
 
     <div class="stats-grid">
@@ -69,19 +72,19 @@
     </div>
 
     <div class="charts-grid">
-        <div class="chart-container" id="chartTahunan"></div>
-        <div class="chart-container" id="chartJenisBuku"></div>
+        <div class="chart-container" id="chartTahunan" style="min-height: 350px;"></div>
+        <div class="chart-container" id="chartJenisBuku" style="min-height: 350px;"></div>
     </div>
 
     <div class="full-chart-wrapper">
         <div class="chart-header">
-            <h3 class="chart-title">Top 5 Fakultas Teraktif</h3>
-            <a href="#" class="see-more-link">
-                Selengkapnya
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+            <h3 class="chart-title" id="fakultasTitle">Top 5 Fakultas Teraktif</h3>
+            <a href="#" class="see-more-link" id="toggleFakultasBtn">
+                <span id="toggleFakultasText">Selengkapnya</span>
+                <svg id="toggleFakultasIcon" style="transition: transform 0.3s ease;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
             </a>
         </div>
-        <div id="chartFakultas" style="height: 300px;"></div>
+        <div id="chartFakultas" style="height: 300px; transition: height 0.4s ease;"></div>
     </div>
 
     <div class="table-wrapper">
@@ -100,100 +103,183 @@
                     <th>Status</th>
                 </tr>
             </thead>
-            <tbody>
-                @foreach($latestRequests as $req)
-                <tr>
-                    <td><strong>REQ-{{ str_pad($req->id, 3, '0', STR_PAD_LEFT) }}</strong></td>
-                    <td>{{ $req->book_title }}</td>
-                    <td>{{ $req->requester_name }}</td>
-                    <td>{{ $req->faculty }}</td>
-                    <td>{{ $req->email }}</td>
-                    <td>
-                        @if($req->status == 'processing')
-                            <span class="badge badge-process">Dalam Proses</span>
-                        @elseif($req->status == 'pending_purchase')
-                            <span class="badge" style="background: #fee2e2; color: #991b1b;">Menunggu Beli</span>
-                        @else
-                            <span class="badge badge-success">Tersedia</span>
-                        @endif
-                    </td>
-                </tr>
-                @endforeach
+            <tbody id="latestRequestsTableBody">
+                <tr><td colspan="6" style="text-align: center; padding: 20px;">Memuat data...</td></tr>
             </tbody>
         </table>
     </div>
 
-    <script src="https://code.highcharts.com/highcharts.js"></script>
-    <script src="https://code.highcharts.com/modules/drilldown.js"></script>
-    <script>
+    <script src="https://cdn.jsdelivr.net/npm/highcharts@11.4.0/highcharts.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highcharts@11.4.0/modules/drilldown.js"></script>
 
+    <script>
         Highcharts.setOptions({
             colors: ['#003366', '#3B82F6', '#10B981', '#F59E0B', '#EF4444'],
-            chart: { style: { fontFamily: 'Inter, sans-serif' } },
-            title: { style: { color: '#003366', fontWeight: 'bold' } }
+            chart: { style: { fontFamily: 'Inter, sans-serif' }, animation: { duration: 500 } },
+            title: { style: { color: '#003366', fontWeight: 'bold' } },
+            lang: { loading: '<div class="hc-spinner"></div><div class="hc-loading-text">Loading...</div>' },
+            loading: { labelStyle: { display: 'block', textAlign: 'center' }, style: { backgroundColor: '#ffffff', opacity: 0.9 } }
         });
 
-        Highcharts.chart('chartTahunan', {
+        const chartTahunan = Highcharts.chart('chartTahunan', {
             chart: { type: 'column' },
             title: { text: 'Permintaan Buku Per-Tahun', align: 'left' },
-            xAxis: { categories: @json($yearlyData->pluck('year')) },
             yAxis: { min: 0, title: { text: 'Jumlah Judul' } },
-            tooltip: { headerFormat: '<span style="font-size:10px">{point.key}</span><table>', pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td><td style="padding:0"><b>{point.y} buku</b></td></tr>', footerFormat: '</table>', shared: true, useHTML: true },
+            tooltip: { shared: true, useHTML: true },
             plotOptions: { column: { pointPadding: 0.2, borderWidth: 0, borderRadius: 5 } },
-            series: [{ 
-                name: 'Request Masuk', 
-                data: @json($yearlyData->pluck('count')), 
-                color: '#3B82F6' 
-            }], 
-            legend: { enabled: false }
+            legend: { enabled: false },
+            series: []
         });
 
-        // Chart Jenis Buku (Pie)
-        Highcharts.chart('chartJenisBuku', {
+        const chartJenisBuku = Highcharts.chart('chartJenisBuku', {
             chart: { type: 'pie' },
             title: { text: 'Jenis Buku', align: 'left' },
-            subtitle: { text: 'Klik "Lainnya" untuk melihat detail' },
             tooltip: { pointFormat: '{series.name}: <b>{point.y} Buku</b> ({point.percentage:.1f}%)' },
-            plotOptions: {
-                pie: {
-                    allowPointSelect: true,
-                    cursor: 'pointer',
-                    dataLabels: {
-                        enabled: true,
-                        format: '<b>{point.name}</b>: {point.y} ({point.percentage:.1f}%)',
-                        style: { fontSize: '11px' }
-                    },
-                    showInLegend: true
-                }
-            },
-            series: [{
-                name: 'Jumlah',
-                colorByPoint: true,
-                data: @json($typeData)
-            }],
-            drilldown: {
-                series: [{
-                    name: 'Detail Lainnya',
-                    id: 'lainnya-detail',
-                    data: @json($drilldownData)
-                }]
-            }
+            plotOptions: { pie: { allowPointSelect: true, cursor: 'pointer', dataLabels: { enabled: true, format: '<b>{point.name}</b>: {point.y}' }, showInLegend: true } },
+            series: [] 
         });
 
-        Highcharts.chart('chartFakultas', {
+        const chartFakultas = Highcharts.chart('chartFakultas', {
             chart: { type: 'bar' },
             title: { text: null },
-            xAxis: { categories: @json($facultyData->pluck('faculty'))},
-            yAxis: { min: 0, title: { text: 'Total Permintaan', align: 'high' }, labels: { overflow: 'justify' }, gridLineWidth: 0 },
-            tooltip: { valueSuffix: ' permintaan' },
+            yAxis: { min: 0, title: { text: 'Total Permintaan' }, gridLineWidth: 0 },
             plotOptions: { bar: { borderRadius: '50%', dataLabels: { enabled: true } } }, 
             legend: { enabled: false },
             credits: { enabled: false },
-            series: [{
-                name: 'Jumlah Request',
-                data: @json($facultyData->pluck('total')),
-                color: '#003366'
-            }],
+            series: [] 
         });
+
+        chartTahunan.showLoading();
+        chartJenisBuku.showLoading();
+        chartFakultas.showLoading();
+
+        fetch('/api/statistik-permintaan')
+            .then(response => response.json())
+            .then(res => {
+                const data = res.data; 
+                const categoriesTahun = data.tahunan.map(item => item.year);
+                const countTahun = data.tahunan.map(item => parseFloat(item.count));
+                chartTahunan.update({ xAxis: { categories: categoriesTahun } });
+                chartTahunan.addSeries({ name: 'Request Masuk', data: countTahun, color: '#3B82F6' });
+                chartTahunan.hideLoading();
+
+                let rawJenis = data.jenis_buku.map(item => ({ 
+                    name: item.name || item.type_of_material, 
+                    y: parseFloat(item.y || item.total || item.count) 
+                }));
+                rawJenis.sort((a, b) => b.y - a.y); 
+                let formattedJenis = [];
+                let drilldownData = [];
+                if (rawJenis.length > 5) {
+                    formattedJenis = rawJenis.slice(0, 4); 
+                    let sisaBuku = rawJenis.slice(4); 
+                    let totalSisa = sisaBuku.reduce((sum, item) => sum + item.y, 0);
+                    formattedJenis.push({
+                        name: 'Lainnya',
+                        y: totalSisa,
+                        drilldown: 'lainnya-detail' 
+                    });
+                    drilldownData = sisaBuku.map(item => [item.name, item.y]);
+                } else {
+                    formattedJenis = rawJenis; 
+                }
+                chartJenisBuku.addSeries({ name: 'Jumlah', colorByPoint: true, data: formattedJenis });
+                if (drilldownData.length > 0) {
+                    chartJenisBuku.update({
+                        drilldown: {
+                            series: [{
+                                name: 'Detail Lainnya',
+                                id: 'lainnya-detail',
+                                data: drilldownData
+                            }]
+                        }
+                    });
+                }
+                chartJenisBuku.hideLoading();
+
+                const top5Fakultas = data.fakultas.slice(0, 5);
+                const catFakultas = top5Fakultas.map(item => item.faculty);
+                const countFakultas = top5Fakultas.map(item => parseFloat(item.total));
+                chartFakultas.update({ xAxis: { categories: catFakultas } });
+                chartFakultas.addSeries({ name: 'Jumlah Request', data: countFakultas, color: '#003366' });
+                chartFakultas.hideLoading();
+
+                window.allFakultasCategories = data.fakultas.map(item => item.faculty);
+                window.allFakultasTotals = data.fakultas.map(item => parseFloat(item.total));
+                window.top5FakultasCategories = catFakultas;
+                window.top5FakultasTotals = countFakultas;
+
+                const tbody = document.getElementById('latestRequestsTableBody');
+                if (data.latest_requests && data.latest_requests.length > 0) {
+                    tbody.innerHTML = ''; 
+
+                    data.latest_requests.forEach(req => {
+                        // 2. KITA PANGGIL LANGSUNG DARI DATABASE BIAR KEREN
+                        // Kalau request_number kosong (data lama), baru pakai id biasa
+                        const formattedId = req.request_number ? req.request_number : 'REQ-' + String(req.id).padStart(3, '0');
+                        
+                        // Tentukan Badge Status
+                        let badgeHtml = '';
+                        if (req.status === 'processing') {
+                            badgeHtml = '<span class="badge badge-process">Dalam Proses</span>';
+                        } else if (req.status === 'pending_purchase') {
+                            badgeHtml = '<span class="badge" style="background: #fee2e2; color: #991b1b;">Menunggu Beli</span>';
+                        } else {
+                            badgeHtml = '<span class="badge badge-success">Tersedia</span>';
+                        }
+
+                        // Buat baris tabel baru
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td><strong>${formattedId}</strong></td>
+                            <td>${req.book_title}</td>
+                            <td>${req.requester_name}</td>
+                            <td>${req.faculty}</td>
+                            <td>${req.email}</td>
+                            <td>${badgeHtml}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #94a3b8; padding: 20px;">Belum ada data permintaan.</td></tr>';
+                }
+
+            }) 
+            .catch(error => {
+                console.error('Waduh gagal narik API:', error);
+                chartTahunan.hideLoading(); chartJenisBuku.hideLoading(); chartFakultas.hideLoading();
+            });
+
+        let isShowingAll = false;
+        const toggleBtn = document.getElementById('toggleFakultasBtn');
+        const titleEl = document.getElementById('fakultasTitle');
+        const toggleText = document.getElementById('toggleFakultasText');
+        const toggleIcon = document.getElementById('toggleFakultasIcon');
+        const containerFakultas = document.getElementById('chartFakultas');
+
+        if(toggleBtn) {
+            toggleBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                if(!window.allFakultasCategories) return; 
+
+                isShowingAll = !isShowingAll;
+                if (isShowingAll) {
+                    titleEl.textContent = 'Distribusi Seluruh Fakultas';
+                    toggleText.textContent = 'Tampilkan Lebih Sedikit';
+                    toggleIcon.style.transform = 'rotate(180deg)';                
+                    const newHeight = Math.max(300, window.allFakultasCategories.length * 40);
+                    containerFakultas.style.height = newHeight + 'px';
+                    chartFakultas.setSize(null, newHeight, {duration: 400});
+                    chartFakultas.update({ xAxis: { categories: window.allFakultasCategories }, series: [{ data: window.allFakultasTotals }] });
+                } else {
+                    titleEl.textContent = 'Top 5 Fakultas Teraktif';
+                    toggleText.textContent = 'Selengkapnya';
+                    toggleIcon.style.transform = 'rotate(0deg)'; 
+                    containerFakultas.style.height = '300px';
+                    chartFakultas.setSize(null, 300, {duration: 400});
+                    chartFakultas.update({ xAxis: { categories: window.top5FakultasCategories }, series: [{ data: window.top5FakultasTotals }] });
+                }
+            });
+        }
     </script>
 </x-app-layout>

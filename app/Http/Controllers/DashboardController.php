@@ -53,7 +53,6 @@ class DashboardController extends Controller
         $facultyData = BookRequest::selectRaw('faculty, count(*) as total')
             ->groupBy('faculty')
             ->orderByDesc('total')
-            ->take(5)
             ->get();
 
         // 5. Tabel Permintaan Terbaru
