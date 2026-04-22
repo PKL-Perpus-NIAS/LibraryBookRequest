@@ -127,9 +127,9 @@ class BookRequestController extends Controller
     // --- FUNGSI KHUSUS API ---
     public function apiStatistik(Request $request)
     {
-        $yearlyData = BookRequest::selectRaw('YEAR(created_at) as year, count(*) as count')
-            ->groupBy('year')
-            ->orderBy('year', 'asc')
+        $yearlyData = BookRequest::selectRaw('EXTRACT(YEAR FROM created_at) as year, count(*) as count')
+            ->groupByRaw('EXTRACT(YEAR FROM created_at)')
+            ->orderBy('year')
             ->get();
 
         $typeData = BookRequest::selectRaw('type_of_material as name, count(*) as y')
