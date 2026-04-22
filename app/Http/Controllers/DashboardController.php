@@ -47,13 +47,25 @@ class DashboardController extends Controller
         $yearlyData = BookRequest::selectRaw('EXTRACT(YEAR FROM created_at) as year, count(*) as count')
             ->groupByRaw('EXTRACT(YEAR FROM created_at)')
             ->orderBy('year')
-            ->get();
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'year' => (int) $item->year,
+                    'count' => (int) $item->count
+                ];
+            });
 
         // 4. Data Top 5 Fakultas (Sesuai request kamu)
         $facultyData = BookRequest::selectRaw('faculty, count(*) as total')
             ->groupBy('faculty')
             ->orderByDesc('total')
-            ->get();
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'faculty' => $item->faculty, 
+                    'total' => (int) $item->total
+                ];
+            });
 
         // 5. Tabel Permintaan Terbaru
         $latestRequests = BookRequest::latest()->take(5)->get();
