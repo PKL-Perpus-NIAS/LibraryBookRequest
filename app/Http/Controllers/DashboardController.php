@@ -44,8 +44,8 @@ class DashboardController extends Controller
         ];
 
         // 2. Data Chart Tahunan (Dikelompokkan per tahun)
-        $yearlyData = BookRequest::selectRaw('YEAR(created_at) as year, count(*) as count')
-            ->groupBy('year')
+        $yearlyData = BookRequest::selectRaw('EXTRACT(YEAR FROM created_at) as year, count(*) as count')
+            ->groupByRaw('EXTRACT(YEAR FROM created_at)')
             ->orderBy('year')
             ->get();
 
