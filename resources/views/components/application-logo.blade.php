@@ -1,1 +1,1 @@
-<img src="{{ asset('images/logo-unair.png') }}" class="h-12 w-auto" alt="Logo UNAIR">
+<img src="{{ asset('images/logo-unair.png') }}" {{ $attributes }} alt="Logo UNAIR">
