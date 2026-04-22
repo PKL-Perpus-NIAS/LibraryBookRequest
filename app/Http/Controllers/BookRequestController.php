@@ -114,10 +114,10 @@ class BookRequestController extends Controller
             'available' => 'Selesai'
         ];
 
-        $years = BookRequest::selectRaw('YEAR(created_at) as year')
-                ->distinct()
-                ->orderBy('year', 'desc')
-                ->pluck('year');
+        $years = BookRequest::selectRaw('EXTRACT(YEAR FROM created_at) as year')
+            ->distinct()
+            ->orderBy('year', 'desc')
+            ->pluck('year');
 
         $materialTypes = ['Monograf', 'Sumber Elektronik', 'Film', 'Terbitan Berkala', 'Bahan Kartografis', 'Bahan Grafis', 'Rekaman Video', 'Musik', 'Bahan Campuran', 'Rekaman Suara', 'Bentuk Mikro', 'Manuskrip', 'Bahan Ephemeral', 'Skripsi', 'Tesis', 'Disertasi', 'Praktek Kerja Lapangan (PKL)', 'Tugas Akhir (Diploma)', 'PKM', 'Karya Tugas Akhir (Spesialis)', 'Karya Ilmiah Akhir (NERS)', 'Laporan Magang Profesi (Akuntansi)', 'Ebook'];
 
