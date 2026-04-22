@@ -154,7 +154,13 @@
             chartFakultas.showLoading();
 
             fetch('/api/statistik-permintaan')
-                .then(response => response.json())
+                .then(async response => {
+                    if (!response.ok) {
+                        const errorHtml = await response.text();
+                        throw new Error(errorHtml);
+                    }
+                    return response.json();
+                })
                 .then(res => {
                     const data = res.data; 
                     const categoriesTahun = data.tahunan.map(item => item.year);
@@ -246,8 +252,10 @@
 
                 }) 
                 .catch(error => {
-                    console.error('Waduh gagal narik API:', error);
+                    console.error('Failed Catch API:', error);
                     chartTahunan.hideLoading(); chartJenisBuku.hideLoading(); chartFakultas.hideLoading();
+                    alert("Gagal mengambil data grafik.\n\nTerdapat query database yang kurang cocok dengan PostgreSQL. Cek Inspect Element (F12) untuk detailnya!");
+                    document.getElementById('chartTahunan').innerHTML = `<div style="color:red; padding:20px; overflow:auto; height:100%;"><b>Error API:</b><br>${error.message}</div>`;
                 });
 
             let isShowingAll = false;
