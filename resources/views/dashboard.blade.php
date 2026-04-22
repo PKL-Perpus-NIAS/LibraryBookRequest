@@ -153,7 +153,7 @@
             chartJenisBuku.showLoading();
             chartFakultas.showLoading();
 
-            fetch('/api/statistik-permintaan')
+            fetch('/statistik-permintaan')
                 .then(async response => {
                     if (!response.ok) {
                         const errorHtml = await response.text();

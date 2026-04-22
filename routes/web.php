@@ -9,6 +9,7 @@ Route::redirect('/', '/login');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/statistik-permintaan', [BookRequestController::class, 'apiStatistik']);
 
     Route::get('/permintaan-buku', [BookRequestController::class, 'index'])->name('permintaan.index');
     Route::post('/permintaan-buku', [App\Http\Controllers\BookRequestController::class, 'store'])->name('permintaan.store');
